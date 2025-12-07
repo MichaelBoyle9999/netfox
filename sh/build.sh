@@ -18,12 +18,20 @@ declare -a OFF_FILES=(
   "addons/netfox.extras/physics/rapier_driver_3d.gd.uid"
 )
 
+SKIP_FETCH=${NETFOX_SKIP_FETCH:-0}
+SKIP_EXPORTS=${NETFOX_SKIP_EXPORTS:-0}
+SKIP_DOCS=${NETFOX_SKIP_DOCS:-0}
+
 # Assume we're running from project root
 source sh/shared.sh
 
-# Grab commit history
-print $BOLD"Unshallowing commit history"$NC
-git fetch --unshallow --filter=tree:0
+if [[ "$SKIP_FETCH" != "1" ]]; then
+  # Grab commit history
+  print $BOLD"Unshallowing commit history"$NC
+  git fetch --unshallow --filter=tree:0
+else
+  print $BOLD"Skipping history fetch"$NC
+fi
 
 print $BOLD"Building netfox v${version}" $NC
 
@@ -93,26 +101,34 @@ for addon in ${addons[@]}; do
     print "::endgroup::"
 done
 
-# Build example game
-print $BOLD"Building Forest Brawl" $NC
-mkdir -p build/linux
-mkdir -p build/win64
+if [[ "$SKIP_EXPORTS" != "1" ]]; then
+  # Build example game
+  print $BOLD"Building Forest Brawl" $NC
+  mkdir -p build/linux
+  mkdir -p build/win64
 
-print "Building with Linux/X11 preset"
-godot --headless --export-release "Linux/X11" "build/linux/forest-brawl.x86_64"
-zip -j "build/forest-brawl.v${version}.linux.zip" build/linux/*
+  print "Building with Linux/X11 preset"
+  godot --headless --export-release "Linux/X11" "build/linux/forest-brawl.x86_64"
+  zip -j "build/forest-brawl.v${version}.linux.zip" build/linux/*
 
-print "Building with Windows preset"
-godot --headless --export-release "Windows Desktop" "build/win64/forest-brawl.exe"
-zip -j "build/forest-brawl.v${version}.win64.zip" build/win64/*
+  print "Building with Windows preset"
+  godot --headless --export-release "Windows Desktop" "build/win64/forest-brawl.exe"
+  zip -j "build/forest-brawl.v${version}.win64.zip" build/win64/*
+else
+  print $BOLD"Skipping Forest Brawl exports"$NC
+fi
 
-# Build docs
-print $BOLD"Building docs" $NC
-mkdocs build --no-directory-urls
-cd site
-zip -r "../build/netfox.docs.v${version}.zip" ./*
-cd ..
-rm -rf site
+if [[ "$SKIP_DOCS" != "1" ]]; then
+  # Build docs
+  print $BOLD"Building docs" $NC
+  mkdocs build --no-directory-urls
+  cd site
+  zip -r "../build/netfox.docs.v${version}.zip" ./*
+  cd ..
+  rm -rf site
+else
+  print $BOLD"Skipping docs build"$NC
+fi
 
 # Cleanup
 print $BOLD"Cleaning up" $NC
