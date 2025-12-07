@@ -21,6 +21,15 @@ declare -a OFF_FILES=(
 SKIP_FETCH=${NETFOX_SKIP_FETCH:-0}
 SKIP_EXPORTS=${NETFOX_SKIP_EXPORTS:-0}
 SKIP_DOCS=${NETFOX_SKIP_DOCS:-0}
+QUIET=${NETFOX_QUIET:-0}
+
+zip_quiet() {
+  if [[ "$QUIET" == "1" ]]; then
+    zip -q "$@"
+  else
+    zip "$@"
+  fi
+}
 
 # Assume we're running from project root
 source sh/shared.sh
@@ -93,7 +102,7 @@ for addon in ${addons[@]}; do
     done
 
     if [ $has_deps = "true" ]; then
-      zip -r "${addon_dst}.zip" "${addon}.v${version}"
+      zip_quiet -r "${addon_dst}.zip" "${addon}.v${version}"
     fi
 
     cd "$ROOT"
@@ -109,11 +118,11 @@ if [[ "$SKIP_EXPORTS" != "1" ]]; then
 
   print "Building with Linux/X11 preset"
   godot --headless --export-release "Linux/X11" "build/linux/forest-brawl.x86_64"
-  zip -j "build/forest-brawl.v${version}.linux.zip" build/linux/*
+  zip_quiet -j "build/forest-brawl.v${version}.linux.zip" build/linux/*
 
   print "Building with Windows preset"
   godot --headless --export-release "Windows Desktop" "build/win64/forest-brawl.exe"
-  zip -j "build/forest-brawl.v${version}.win64.zip" build/win64/*
+  zip_quiet -j "build/forest-brawl.v${version}.win64.zip" build/win64/*
 else
   print $BOLD"Skipping Forest Brawl exports"$NC
 fi
@@ -123,7 +132,7 @@ if [[ "$SKIP_DOCS" != "1" ]]; then
   print $BOLD"Building docs" $NC
   mkdocs build --no-directory-urls
   cd site
-  zip -r "../build/netfox.docs.v${version}.zip" ./*
+  zip_quiet -r "../build/netfox.docs.v${version}.zip" ./*
   cd ..
   rm -rf site
 else

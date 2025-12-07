@@ -6,7 +6,16 @@ NC="\033[0m";
 BOLD="\033[1m";
 
 print() {
-  echo -e $@
+  local message="$*"
+  local quiet=${NETFOX_QUIET:-0}
+
+  if [[ "$quiet" == "1" ]]; then
+    if [[ "$message" != *"::error::"* && "$message" != *"::warning::"* ]]; then
+      return
+    fi
+  fi
+
+  echo -e "$@"
 }
 
 # Version and addon data for build
